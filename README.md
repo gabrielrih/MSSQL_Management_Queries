@@ -1,0 +1,1 @@
+# MSSQL_Manegement_Querys
