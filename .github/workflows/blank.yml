@@ -15,7 +15,7 @@ jobs:
         with:
           post-comment: true
           token: fc111b3c60795a820f97cebf82a1dfd2a606622d
-          risk-level: 3
+          risk-level: 1
           verbose: true
           postfixes: sql
       - name: Get output
