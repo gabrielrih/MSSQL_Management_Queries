@@ -2,6 +2,7 @@
 
 name: check-sql-syntax
 on: 
+    push:
     pull_request:
     workflow_dispatch:
   
@@ -16,8 +17,7 @@ jobs:
           post-comment: true
           token: fc111b3c60795a820f97cebf82a1dfd2a606622d
           risk-level: 1
-          verbose: true
-          postfixes: sql
+          verbose: false
       - name: Get output
         run: echo "Issues found in previous step"
         if: steps.sqlcheck.outputs.issue-found
