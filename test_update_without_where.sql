@@ -1,1 +1,0 @@
-UPDATE Usuarios SET Estado = 0
