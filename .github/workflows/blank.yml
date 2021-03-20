@@ -2,33 +2,29 @@
 
 name: CI
 
-# Controls when the action will run. 
+# Controls when the action will run
 on:
-  # Triggers the workflow on push or pull request events but only for the main branch
   push:
     branches: [ main ]
   pull_request:
     branches: [ main ]
-
-  # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
   # This workflow contains a single job called "build"
   sqlcheck:
-    # The type of runner that the job will run on
+    name: SQLCheck Action
     runs-on: ubuntu-latest
-
-    # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-      # Check SQL syntax
-      - name: SQLCheck Action
       - uses: actions/checkout@v2
       - uses: yokawasa/action-sqlcheck@v1.3.0
+      id: sqlcheck
       with:
-        # Post comment to PR
         post-comment: true
         risk-level: 3
         verbose: true
         postfixes: sql
+    - name: Get output
+      run: echo "Issues found in previous step"
+      if: steps.sqlcheck.outputs.issue-found
