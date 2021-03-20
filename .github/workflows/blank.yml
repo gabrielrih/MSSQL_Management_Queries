@@ -14,6 +14,7 @@ jobs:
       - uses: yokawasa/action-sqlcheck@v1.3.0
         with:
           post-comment: true
+          token: fc111b3c60795a820f97cebf82a1dfd2a606622d
           risk-level: 3
           verbose: true
           postfixes: sql
