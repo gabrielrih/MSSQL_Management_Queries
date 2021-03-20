@@ -32,5 +32,3 @@ jobs:
         risk-level: 3
         verbose: true
         postfixes: sql
-        # Path(s) of directory under which the action check any files whether they are part of the repository or not. By default, the action checks only files in PR queries. By specifying directories the action no longer check files in PR queries but files under the directories
-    directories: # optional, default is 
