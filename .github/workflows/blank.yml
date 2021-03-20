@@ -16,20 +16,16 @@ on:
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
   # This workflow contains a single job called "build"
-  build:
+  sqlcheck:
     # The type of runner that the job will run on
     runs-on: ubuntu-latest
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v2
-
       # Check SQL syntax
       - name: SQLCheck Action
-      # You may pin to the exact commit or the version.
-      # uses: yokawasa/action-sqlcheck@0637a74e5cb52207e4f02042c093709d0756f129
-      uses: yokawasa/action-sqlcheck@v1.3.0
+      - uses: actions/checkout@v2
+      - uses: yokawasa/action-sqlcheck@v1.3.0
       with:
         # Post comment to PR
         post-comment: true
