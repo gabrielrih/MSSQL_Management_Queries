@@ -1,4 +1,5 @@
-use DB_InvoiCy_UY_DSV_gr14171
+USE DBINVOICY_SAAS
+GO
 
 select i.[name] as index_name,
     substring(column_names, 1, len(column_names)-1) as [columns],
