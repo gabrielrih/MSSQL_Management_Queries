@@ -1,12 +1,13 @@
-USE DBINVOICY_SAAS
+USE Traces
+GO
 
 SELECT
     t.NAME AS Entidade,
     p.rows AS Registros,
 	DB.physical_name  ARQUIVO,
-    SUM(a.total_pages) * 8 AS EspacoTotalKB,
-    SUM(a.used_pages) * 8 AS EspacoUsadoKB,
-    (SUM(a.total_pages) - SUM(a.used_pages)) * 8 AS EspacoNaoUsadoKB
+    (SUM(a.total_pages) * 8 / 1024) AS EspacoTotalMB,
+    (SUM(a.used_pages) * 8 / 1024) AS EspacoUsadoMB,
+    ((SUM(a.total_pages) - SUM(a.used_pages)) * 8 / 1024) AS EspacoNaoUsadoMB
 FROM
     sys.tables t
 INNER JOIN
@@ -29,4 +30,5 @@ WHERE
 GROUP BY
     t.Name, s.Name, p.Rows,DB.physical_name
 ORDER BY
-    EspacoTotalKB DESC
+    EspacoTotalMB DESC
+GO
