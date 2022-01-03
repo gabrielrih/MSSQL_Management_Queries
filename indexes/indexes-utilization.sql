@@ -1,5 +1,8 @@
 /*
 	Esta query mostra a utilizacao dos indices de uma determinada tabela desde que o SQL Server foi reinicializado.
+	- user_Updates (Insert, update, delete)
+
+	Muito user_Updates e user_lookups é ruim. 
 */
 USE TesteIndexes
 GO
