@@ -21,5 +21,6 @@ INNER JOIN sys.dm_db_missing_index_details dm_mid
 ON dm_mig.index_handle = dm_mid.index_handle
 WHERE dm_mid.database_ID = DB_ID()
 and dm_migs.last_user_seek >= getdate()-1
+--and OBJECT_NAME(dm_mid.OBJECT_ID,dm_mid.database_id) = 'TableName'
 ORDER BY Avg_Estimated_Impact DESC
 GO
