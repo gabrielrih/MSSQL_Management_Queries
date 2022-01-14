@@ -11,3 +11,4 @@ It has:
 - WhoIsActive
 - Profiler
 - Jobs
+- More
