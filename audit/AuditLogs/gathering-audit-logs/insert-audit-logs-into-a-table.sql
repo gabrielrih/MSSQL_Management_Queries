@@ -1,35 +1,4 @@
 /**
-    Creating Audit Logs database/table
-*/
-USE MASTER
-GO
-
-CREATE DATABASE AuditLogs
-GO
-
-USE AuditLogs
-GO
-
--- Reference: https://docs.microsoft.com/pt-br/sql/relational-databases/system-functions/sys-fn-get-audit-file-transact-sql?view=sql-server-ver16
-CREATE TABLE Logs (
-	id INT IDENTITY(1,1) PRIMARY KEY,
-	event_time DATETIME,
-	action_id VARCHAR(4),
-	action_description VARCHAR(40),
-	user_name VARCHAR(128), -- SYSNAME,
-	server_instance_name VARCHAR(128), -- SYSNAME,
-	database_name VARCHAR(128), -- SYSNAME,
-	schema_name VARCHAR(128), -- SYSNAME,
-	object_name VARCHAR(128), -- SYSNAME,
-	statement NVARCHAR(4000)
-)
-GO
-
-CREATE NONCLUSTERED INDEX aux_index ON Logs (event_time, action_id, database_name)
-GO
-
-
-/**
 	Inserting AuditLogs into a TABLE
 */
 USE AuditLogs
