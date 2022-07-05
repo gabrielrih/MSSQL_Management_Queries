@@ -25,6 +25,9 @@ CREATE TABLE Logs (
 )
 GO
 
+CREATE NONCLUSTERED INDEX aux_index ON Logs (event_time, action_id, database_name)
+GO
+
 
 /**
 	Inserting AuditLogs into a TABLE
