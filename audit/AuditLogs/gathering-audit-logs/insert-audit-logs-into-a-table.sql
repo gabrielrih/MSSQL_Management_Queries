@@ -1,5 +1,7 @@
 /**
 	Inserting AuditLogs into a TABLE
+	References:
+		https://sqlquantumleap.com/reference/server-audit-filter-values-for-action_id/
 */
 USE AuditLogs
 GO
@@ -122,6 +124,7 @@ SELECT
 		WHEN action_id = 'UP' THEN 'UPDATE'
 		WHEN action_id = 'USAF' THEN 'CHANGE USERS LOGIN AUTO'
 		WHEN action_id = 'USLG' THEN 'CHANGE USERS LOGIN'
+		WHEN action_id = 'VW' THEN 'VIEW'
 		WHEN action_id = 'VDST' THEN 'VIEW DATABASE STATE'
 		WHEN action_id = 'VSST' THEN 'VIEW SERVER STATE'
 		WHEN action_id = 'VWCT' THEN 'VIEW CHANGETRACKING'
