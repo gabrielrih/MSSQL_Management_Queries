@@ -27,6 +27,7 @@ CREATE TABLE Logs (
 GO
 
 CREATE NONCLUSTERED INDEX aux_index ON Logs (event_time, action_id, database_name)
+CREATE NONCLUSTERED INDEX aux_user_index ON Logs (user_name)
 GO
 
 -- Table to save the results from a specific filter runned over Logs table
