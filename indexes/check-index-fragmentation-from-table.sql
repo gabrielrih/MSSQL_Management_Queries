@@ -1,8 +1,6 @@
-USE TesteIndexes
-GO
-
-DECLARE @DBName VARCHAR(100) = 'TesteIndexes'
-DECLARE @TableName VARCHAR(100) = 'TestFragmentation'
+-- Reference: https://learn.microsoft.com/pt-br/sql/relational-databases/system-dynamic-management-views/sys-dm-db-index-physical-stats-transact-sql?view=sql-server-ver16
+DECLARE @DBId INT = DB_ID(N'HBGDT')
+DECLARE @TableId INT = OBJECT_ID(N'doc_cte')
 
 SELECT index_Type_desc,avg_page_space_used_in_percent
 	,avg_fragmentation_in_percent	
@@ -11,5 +9,5 @@ SELECT index_Type_desc,avg_page_space_used_in_percent
 	,page_count
 	,fragment_count
 	,avg_record_size_in_bytes
-FROM sys.dm_db_index_physical_stats(DB_ID(@DBName), OBJECT_ID(@TableName), NULL, NULL, 'DETAILED')
+FROM sys.dm_db_index_physical_stats(@DBId, @TableId, NULL, NULL, 'LIMITED') -- DETAILED
 GO
