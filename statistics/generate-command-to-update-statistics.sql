@@ -10,7 +10,7 @@ SET @linhas_alteradas=1000
  
 --Update all the outdated statistics
 DECLARE cursor_estatisticas CURSOR FOR
-SELECT 'UPDATE STATISTICS '+ OBJECT_NAME(id) + ' ' + name + ' with full scan'
+SELECT 'UPDATE STATISTICS '+ OBJECT_NAME(id) + ' ' + name + ' with fullscan'
 FROM sys.sysindexes
 WHERE	STATS_DATE(id, indid) <= DATEADD(HOUR, -@horas, GETDATE()) AND
 		rowmodctr>=@linhas_alteradas AND
