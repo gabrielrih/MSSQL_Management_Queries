@@ -12,4 +12,5 @@ GO
 
 -- Add the role role for user
 EXEC sp_addrolemember N'db_datareader', N'userName'
+EXEC sp_addrolemember N'db_datawriter', N'userName'
 GO
