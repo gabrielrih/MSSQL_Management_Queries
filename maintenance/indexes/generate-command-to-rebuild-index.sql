@@ -1,100 +1,177 @@
 /**
 	Generate rebuild/reorganize index commands to a especific database
 */
-DECLARE @Id_Database INT = db_id()
+
+CREATE PROCEDURE [dbo].[stp_index_maintenance]
+	@Minimum_to_reorganize AS INT = 10,
+	@Minimum_to_rebuild AS INT = 30,
+	@Minimum_page_count AS INT = 1000 
+AS
+BEGIN
+
+SET NOCOUNT ON
+
+IF Object_id('tempdb..#Historico_Fragmentacao_Indice_TEMP') IS NOT NULL
+  DROP TABLE #historico_fragmentacao_indice_temp
+
+CREATE TABLE #historico_fragmentacao_indice_temp
+(
+    [dt_referencia]                [DATETIME] NULL,
+    [nm_servidor]                  VARCHAR(50) NULL,
+    [nm_database]                  VARCHAR(100) NULL,
+    [nm_tabela]                    VARCHAR(1000) NULL,
+    [nm_indice]                    [VARCHAR](1000) NULL,
+	[partition_number]				INT,
+    [nm_schema]                    VARCHAR(100),
+    [avg_fragmentation_in_percent] [NUMERIC](5, 2) NULL,
+    [page_count]                   [INT] NULL,
+    [fill_factor]                  [TINYINT] NULL,
+    [objectid]                     INT,
+    [indexid]                      INT
+)
+ON [PRIMARY]
+
+IF Object_id('tempdb..#Historico_Fragmentacao_Indice') IS NOT NULL
+	DROP TABLE #historico_fragmentacao_indice
+
+CREATE TABLE #historico_fragmentacao_indice
+(
+    [dt_referencia]                [DATETIME] NULL,
+    [nm_servidor]                  VARCHAR(50) NULL,
+    [nm_database]                  VARCHAR(100) NULL,
+    [nm_tabela]                    VARCHAR(1000) NULL,
+    [nm_indice]                    [VARCHAR](1000) NULL,
+	[partition_number]				VARCHAR(100),
+    [nm_schema]                    VARCHAR(100),
+    [avg_fragmentation_in_percent] [NUMERIC](5, 2) NULL,
+    [page_count]                   [INT] NULL,
+    [fill_factor]                  [TINYINT] NULL
+)
+ON [PRIMARY]
+
+DECLARE @Id_Database INT = Db_id()
 DECLARE @Table_ID INT
 
-IF object_id('tempdb..#Historico_Fragmentacao_Indice_TEMP') IS NOT NULL DROP TABLE #Historico_Fragmentacao_Indice_TEMP
-CREATE TABLE #Historico_Fragmentacao_Indice_TEMP(
-	[Dt_Referencia] [datetime] NULL,
-	[Nm_Servidor] VARCHAR(50) NULL,
-	[Nm_Database] VARCHAR(100) NULL,
-	[Nm_Tabela] VARCHAR(1000) NULL,
-	[Nm_Indice] [varchar](1000) NULL,
-	[Nm_Schema] varchar(100),
-	[avg_fragmentation_in_percent] [numeric](5, 2) NULL,
-	[page_count] [int] NULL,
-	[fill_factor] [tinyint] NULL,
-	[Fl_Compressao] [tinyint] NULL,
-	[ObjectID] int,
-	[indexid] int
-) ON [PRIMARY]
+IF ( Object_id('tempdb..#Tabelas') IS NOT NULL )
+  DROP TABLE #tabelas
 
-IF object_id('tempdb..#Historico_Fragmentacao_Indice') IS NOT NULL DROP TABLE #Historico_Fragmentacao_Indice
-CREATE TABLE #Historico_Fragmentacao_Indice(
-	[Dt_Referencia] [datetime] NULL,
-	[Nm_Servidor] VARCHAR(50) NULL,
-	[Nm_Database] VARCHAR(100) NULL,
-	[Nm_Tabela] VARCHAR(1000) NULL,
-	[Nm_Indice] [varchar](1000) NULL,
-	Nm_Schema varchar(100),
-	[Avg_Fragmentation_In_Percent] [numeric](5, 2) NULL,
-	[Page_Count] [int] NULL,
-	[Fill_Factor] [tinyint] NULL,
-	[Fl_Compressao] [tinyint] NULL	
-) ON [PRIMARY]
-
-IF (OBJECT_ID('tempdb..#Tabelas') IS NOT NULL) DROP TABLE #Tabelas
-SELECT OBJECT_NAME(s.object_id) name, s.object_id
-INTO #Tabelas
+-- Getting all the database tables
+SELECT
+	Object_name(s.object_id) AS NAME,
+	s.object_id
+INTO #tabelas
 FROM sys.dm_db_partition_stats s
 JOIN sys.tables t ON s.object_id = t.object_id
 GROUP BY s.object_id
-HAVING SUM(s.used_page_count) > 1000
+HAVING SUM(s.used_page_count) > @Minimum_page_count
 
-CREATE CLUSTERED INDEX SK01_#Tabelas ON #Tabelas(object_id)
+CREATE CLUSTERED INDEX sk01_#tabelas ON #tabelas(object_id)
 
-WHILE EXISTS ( SELECT TOP 1 object_id FROM #Tabelas )
+-- For each table get the index details
+WHILE EXISTS (SELECT TOP 1 object_id FROM #tabelas)
 BEGIN
+	-- Get a single table
+	SELECT TOP 1 @Table_ID = object_id FROM #tabelas
 
-	SELECT TOP 1 @Table_ID = object_id FROM #Tabelas
-		
-	INSERT INTO #Historico_Fragmentacao_Indice_TEMP
-	SELECT	GETDATE(),
-			@@SERVERNAME Nm_Servidor,
-			DB_NAME(@Id_Database) Nm_Database,
-			'' Nm_Tabela, B.name Nm_Indice,
-			'' Nm_Schema,
-			avg_fragmentation_in_percent,
-			page_count,
-			fill_factor,
-			'' data_compression,
-			A.object_id,
-			A.index_id
-	FROM sys.dm_db_index_physical_stats(@Id_Database, @Table_ID, null,null,null) A
-	JOIN sys.indexes B ON A.object_id = B.object_id and A.index_id = B.index_id
-	--WHERE page_count > 1000
+	-- Search for the index fragmentation in the current table
+	INSERT INTO #historico_fragmentacao_indice_temp
+	SELECT
+		GETDATE(),
+		@@servername AS Nm_Servidor,
+		Db_name(@Id_Database) AS Nm_Database,
+		'' AS Nm_Tabela,
+		B.NAME AS Nm_Indice,
+		partition_number,
+		'' AS Nm_Schema,
+		avg_fragmentation_in_percent,
+		page_count,
+		fill_factor,
+		A.object_id,
+		A.index_id
+	FROM sys.Dm_db_index_physical_stats(@Id_Database, @Table_ID, NULL, NULL, NULL) A
+	JOIN sys.indexes B
+	ON A.object_id = B.object_id AND A.index_id = B.index_id
+	WHERE page_count > @Minimum_page_count
 
-	DELETE TOP(1) FROM #Tabelas WHERE object_id = @Table_ID
+	-- Delete from temp table the finished table
+	DELETE #tabelas WHERE  object_id = @Table_ID
+END
+
+-- DEBUG
+--SELECT * FROM #historico_fragmentacao_indice_temp
+
+-- Getting more details about table and schema
+INSERT INTO #historico_fragmentacao_indice
+SELECT A.dt_referencia,
+       A.nm_servidor,
+       A.nm_database,
+       D.NAME,
+       A.nm_indice,
+	   A.partition_number,
+       F.NAME,
+       A.avg_fragmentation_in_percent,
+       A.page_count,
+       A.fill_factor
+FROM #historico_fragmentacao_indice_temp A
+JOIN sys.sysobjects D ON A.objectid = D.id
+JOIN sys.objects E ON D.id = E.object_id
+JOIN sys.schemas F ON E.schema_id = F.schema_id
+
+-- DEBUG
+--SELECT * FROM #historico_fragmentacao_indice
+
+IF Object_id('tempdb..#Indices_Fragmentados') IS NOT NULL
+  DROP TABLE #indices_fragmentados
+
+-- Generate the scripts (do not execute it yet)
+SELECT
+	IDENTITY(int, 1, 1) Id,
+    nm_tabela,
+    CASE
+        WHEN nm_indice IS NULL THEN
+			'ALTER TABLE ' + nm_schema + '.[' + nm_tabela + '] REBUILD'
+        ELSE 
+			CASE
+				WHEN avg_fragmentation_in_percent < @Minimum_to_rebuild THEN
+					'ALTER INDEX [' + nm_indice + '] ON ' + nm_schema + '.[' + nm_tabela + '] REORGANIZE PARTITION = ' + partition_number
+				ELSE 
+					'ALTER INDEX [' + nm_indice + '] ON ' + nm_schema + '.[' + nm_tabela + '] REBUILD PARTITION = ' + partition_number + ' WITH (PAD_INDEX = ON, FILLFACTOR =80, SORT_IN_TEMPDB =ON, ONLINE =ON)'
+			END
+	END Comando,
+	page_count,
+	avg_fragmentation_in_percent
+INTO #indices_fragmentados
+FROM #historico_fragmentacao_indice A WITH(nolock)
+WHERE
+	dt_referencia >= Cast(Floor(Cast(Getdate() AS FLOAT)) AS DATETIME) AND
+	(
+		(avg_fragmentation_in_percent >= @Minimum_to_reorganize AND nm_indice IS NOT NULL)
+		OR
+		(nm_indice IS NULL AND avg_fragmentation_in_percent > 30)
+	)
+ORDER BY nm_indice
+
+-- Debug
+--SELECT DISTINCT(comando) FROM #indices_fragmentados
+
+-- Executing scripts
+--  It may has a lot of repeated commands, so we use the distinct to do not run the same command twice
+DECLARE @Id INT;
+DECLARE @SQLSTRING VARCHAR(max)
+WHILE EXISTS (SELECT DISTINCT(comando) FROM #indices_fragmentados)
+BEGIN
+	-- Get one command to run
+	SELECT TOP 1 @Id = id, @SQLString = comando
+	FROM #indices_fragmentados
+
+	-- Run command
+	PRINT @SQLString
+	--EXECUTE sp_executesql @SQLString
+
+	-- Delete from the temp table the executed command
+	DELETE FROM #indices_fragmentados WHERE id = @Id;
+END
+
+SET NOCOUNT OFF
 
 END
-	
-INSERT INTO #Historico_Fragmentacao_Indice
-SELECT	A.Dt_Referencia, A.Nm_Servidor,  A.Nm_Database, D.name , A.Nm_Indice, F.name, A.avg_fragmentation_in_percent, A.page_count,A.fill_factor, data_compression
-FROM #Historico_Fragmentacao_Indice_TEMP A
-JOIN sys.partitions C ON C.object_id = A.ObjectID AND C.index_id = A.indexid
-JOIN sys.sysobjects D ON A.ObjectID = D.id
-JOIN sys.objects E ON D.id = E.object_id
-JOIN  sys.schemas F ON E.schema_id = F.schema_id	
-	
-IF OBJECT_ID('tempdb..#Indices_Fragmentados' ) IS NOT NULL DROP TABLE #Indices_Fragmentados
-SELECT IDENTITY(INT,1,1) Id,Nm_Tabela, 
-				CASE WHEN Nm_Indice IS null 
-						THEN
-							'ALTER TABLE ' + Nm_Schema+'.['+ Nm_Tabela + '] REBUILD'
-						ELSE
-							'ALTER INDEX ['+ Nm_Indice+ '] ON ' + Nm_Schema+'.['+ Nm_Tabela + 
-								CASE when Avg_Fragmentation_In_Percent < 30 then '] REORGANIZE' else '] REBUILD with (PAD_INDEX = on,FILLFACTOR =80,SORT_IN_TEMPDB =on, ONLINE =on)' end
-				END Comando,Page_Count,avg_fragmentation_in_percent
-INTO #Indices_Fragmentados			
-FROM #Historico_Fragmentacao_Indice A WITH(NOLOCK)
-WHERE Dt_Referencia >= CAST(FLOOR(cast(getdate() AS FLOAT)) AS DATETIME)
-	and ((Avg_Fragmentation_In_Percent >= 10 AND Nm_Indice IS NOT NULL ) OR (Nm_Indice IS null  AND  avg_fragmentation_in_percent > 30))
-	--and Page_Count > 1000
-	--and Page_Count < 1000000  --indices grandes planejar janela para execução. Ou se quiser libere comentando essa linha
-ORDER BY Nm_Indice
-		
-SELECT * FROM #Indices_Fragmentados
-ORDER BY page_count DESC
-
-GO
