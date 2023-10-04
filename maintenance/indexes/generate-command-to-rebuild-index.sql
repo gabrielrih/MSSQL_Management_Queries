@@ -157,7 +157,7 @@ ORDER BY nm_indice
 -- Executing scripts
 --  It may has a lot of repeated commands, so we use the distinct to do not run the same command twice
 DECLARE @Id INT;
-DECLARE @SQLSTRING VARCHAR(max)
+DECLARE @SQLSTRING NVARCHAR(max)
 WHILE EXISTS (SELECT DISTINCT(comando) FROM #indices_fragmentados)
 BEGIN
 	-- Get one command to run
