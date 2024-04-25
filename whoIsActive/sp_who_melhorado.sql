@@ -1,5 +1,3 @@
-USE MASTER
-GO
 SELECT SPID, ER.percent_complete ,
 /* This piece of code has been taken from article. Nice code to get time criteria's
 http://beyondrelational.com/blogs/geniiius/archive/2011/11/01/backup-restore-checkdb-shrinkfile-progress.aspx
