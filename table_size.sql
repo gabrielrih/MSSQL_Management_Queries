@@ -1,19 +1,17 @@
 -- Query 1
 SELECT
-    t.NAME AS TableName,
+    t.NAME AS 'table_name',
+	sc.name AS 'schema_name',
     SUM(a.total_pages) * 8 AS TotalSpaceKB, 
     SUM(a.used_pages) * 8 AS UsedSpaceKB, 
     (SUM(a.total_pages) - SUM(a.used_pages)) * 8 AS UnusedSpaceKB
-FROM
-    sys.tables t
-INNER JOIN
-    sys.partitions p ON t.object_id = p.OBJECT_ID
-INNER JOIN
-    sys.allocation_units a ON p.partition_id = a.container_id
-GROUP BY
-    t.Name
-ORDER BY
-    TotalSpaceKB Desc
+FROM sys.tables t
+INNER JOIN sys.schemas sc ON t.schema_id = sc.schema_id
+INNER JOIN sys.partitions p ON t.object_id = p.OBJECT_ID
+INNER JOIN sys.allocation_units a ON p.partition_id = a.container_id
+GROUP BY t.Name, sc.name
+ORDER BY TotalSpaceKB Desc
+GO
     
 -- Query 2
 SELECT
