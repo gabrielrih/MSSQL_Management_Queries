@@ -9,6 +9,12 @@ Estratégias:
 - Opção offline
 - Downtime maior que as opções abaixo
 - Tem alguns scripts de exemplo aqui
+- Backup:
+  - https://learn.microsoft.com/en-us/sql/relational-databases/backup-restore/sql-server-backup-to-url?view=sql-server-ver17#limitations-of-backuprestore-to-azure-blob-storage
+  - https://learn.microsoft.com/en-us/sql/t-sql/statements/backup-transact-sql?view=sql-server-ver17
+- Restore:
+  - https://docs.azure.cn/en-us/azure-sql/managed-instance/restore-sample-database-quickstart#use-t-sql-to-restore-from-a-backup-file
+  - https://learn.microsoft.com/en-us/sql/t-sql/statements/restore-statements-transact-sql?view=sql-server-ver17
 
 ## Copy / Move
 - Melhor escolha.
