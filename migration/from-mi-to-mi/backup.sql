@@ -20,5 +20,5 @@ URL = 'https://my.blob.core.windows.net/dump/hbnfe_prod_2.bak',
 URL = 'https://my.blob.core.windows.net/dump/hbnfe_prod_3.bak',
 URL = 'https://my.blob.core.windows.net/dump/hbnfe_prod_4.bak',
 URL = 'https://my.blob.core.windows.net/dump/hbnfe_prod_5.bak'
-WITH COPY_ONLY, INIT, COMPRESSION, STATS = 5
+WITH COPY_ONLY, INIT, MAXTRANSFERSIZE = 4194304, BLOCKSIZE = 65536, COMPRESSION, STATS = 5
 GO
